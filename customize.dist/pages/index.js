@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     'jquery',
     '/api/config',
@@ -10,13 +14,9 @@ define([
     '/customize/application_config.js',
     '/common/outer/local-store.js',
     '/customize/pages.js',
-], function ($, Config, h, Hash, Constants, Util, TextFit, Msg, AppConfig, LocalStore, Pages) {
+    '/common/pad-types.js',
+], function ($, Config, h, Hash, Constants, Util, TextFit, Msg, AppConfig, LocalStore, Pages, PadTypes) {
     var urlArgs = Config.requireConf.urlArgs;
-
-    var isAvailableType = function (x) {
-        if (!Array.isArray(AppConfig.availablePadTypes)) { return true; }
-        return AppConfig.availablePadTypes.indexOf(x) !== -1;
-    };
 
     var checkEarlyAccess = function (x) {
         // Check if this is an early access app and if they are allowed.
@@ -47,7 +47,7 @@ define([
                 [ 'diagram', Msg.type.diagram],
                 [ 'slide', Msg.type.slide]
             ].filter(function (x) {
-                return isAvailableType(x[0]);
+                return PadTypes.isAvailable(x[0]);
             })
             .map(function (x) {
                 var s = 'div.bs-callout.cp-callout-' + x[0];
@@ -121,6 +121,7 @@ define([
         var imprintLink = fastLink('imprint');
         var privacyLink = fastLink('privacy');
         var termsLink = fastLink('terms');
+        var statusLink = fastLink('status');
 
         var notice;
 /*  Admins can specify a notice to display in application_config.js via the `homeNotice` attribute.
@@ -133,6 +134,7 @@ define([
         }
 
         // instance title
+
         var instanceTitle = h('h1.cp-instance-title', Pages.Instance.name);
 
         // instance location
@@ -170,7 +172,7 @@ define([
                     h('div.row.cp-home-hero', [
                         h('div.cp-title.col-lg-6', [
                             h('img', {
-                                src: '/customize/CryptPad_logo_hero.svg?' + urlArgs,
+                                src: '/api/logo?' + urlArgs,
                                 'aria-hidden': 'true',
                                 alt: ''
                             }),
@@ -181,7 +183,8 @@ define([
                                 termsLink,
                                 privacyLink,
                                 imprintLink,
-                                h('a', {href:"/contact.html"}, Msg.contact)
+                                h('a', {href:"/contact.html"}, Msg.contact),
+                                statusLink,
                             ])
                         ]),
                         h('div.cp-apps.col-lg-6', [

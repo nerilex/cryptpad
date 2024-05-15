@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 name: Bug report
 description: Report a bug, otherwise see the links below
 labels: ["bug"]
@@ -51,7 +55,7 @@ body:
   - type: dropdown
     id: operating-system
     attributes:
-      label: What opreating system are you using?
+      label: Which operating system are you using?
       multiple: true
       options:
         - Linux/BSD/UNIX
@@ -85,6 +89,11 @@ body:
       label: Version
       description: What version of CryptPad are you running?
       options:
+        - 2024.3.0
+        - 5.7.0
+        - 5.6.0
+        - 5.5.0
+        - 5.4.1
         - 5.4.0
         - 5.3.0
         - 5.2.1
@@ -93,11 +102,6 @@ body:
         - 5.0.0
         - 4.14.1
         - 4.14.0
-        - 4.13.0
-        - 4.12.1
-        - 4.12.0
-        - 4.11.0
-        - 4.10.0
         - Other
     validations:
       required: true

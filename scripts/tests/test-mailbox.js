@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 /* globals process */
 
 var Client = require("../../lib/client/");
@@ -145,11 +149,10 @@ var createUser = function (config, cb) {
             //wc.leave();
         }));
     }).nThen(function () {
-        user.cleanup = function (cb) {
+        user.cleanup = function (/* cb */) {
             //console.log("Destroying user");
             // TODO remove your mailbox
             user.destroy.fire();
-            cb = cb;
         };
 
         cb(void 0, user);

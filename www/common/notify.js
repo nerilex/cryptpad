@@ -1,3 +1,9 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+/* eslint compat/compat: "off" */
+
 define(['/api/config'], function (ApiConfig) {
     var Module = {};
 
@@ -94,7 +100,7 @@ define(['/api/config'], function (ApiConfig) {
 
         if(!document.getElementById("favicon-ico")) {
             var faviconLink = document.createElement('link');
-            attrs.href = attrs.href.replaceAll(".png", ".ico");
+            attrs.href = attrs.href.replace(/\.png/g, ".ico");
             attrs.id = 'favicon-ico';
             attrs.type = 'image/x-icon';
 

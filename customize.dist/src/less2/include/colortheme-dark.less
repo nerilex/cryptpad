@@ -1,11 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 @colortheme_font: 'Open Sans', 'Helvetica Neue', sans-serif;
 @colortheme_app-font-size: 16px;
 @colortheme_app-font-size-small: 13px;
 @colortheme_app-font: @colortheme_app-font-size @colortheme_font;
 
+// Colors
+@cryptpad_color_brand: #0087FF;
+@cryptpad_color_brand_300: lighten(@cryptpad_color_brand, 30%);
+@cryptpad_color_brand_fade: fade(@cryptpad_color_brand, 75%);
+@cryptpad_color_brand_fader: fade(@cryptpad_color_brand, 50%);
+@cryptpad_color_brand_fadest: fade(@cryptpad_color_brand, 25%);
+
 @colortheme_apps: {
-    default: #0087FF;
-    drive: #0087FF; // Used as icon color in index.js (index.html)
+    default: @cryptpad_color_brand;
+    drive: @cryptpad_color_brand; // Used as icon color in index.js (index.html)
     pad: #256ad5;
     code: #EAA000;
     slide: #e57614;
@@ -21,17 +34,10 @@
 }
 
 @colortheme_static_apps: {
-    default: #0087FF;
+    default: @cryptpad_color_brand;
     teams: #4A3BBD;
     contacts: #607B8D;
 }
-
-// Colors
-@cryptpad_color_brand: #0087FF;
-@cryptpad_color_brand_300: lighten(@cryptpad_color_brand, 30%);
-@cryptpad_color_brand_fade: fade(@cryptpad_color_brand, 75%);
-@cryptpad_color_brand_fader: fade(@cryptpad_color_brand, 50%);
-@cryptpad_color_brand_fadest: fade(@cryptpad_color_brand, 25%);
 
 @cryptpad_color_white: #FFF;
 @cryptpad_color_grey_50: #FAFAFA;

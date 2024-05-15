@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # CryptPad
 
 CryptPad is a collaboration suite that is end-to-end-encrypted and open-source. It is built to enable collaboration, synchronizing changes to documents in real time. Because all data is encrypted, the service and its administrators have no way of seeing the content being edited and stored.
@@ -26,7 +32,7 @@ You can find `Dockerfile`, `docker-compose.yml` and `docker-entrypoint.sh` files
 
 Previously, Docker images were community maintained, had their own repository and weren't official supported. We changed that with v5.4.0 during July 2023. Thanks to @promasu for all the work on the community images.
 
-# Security
+# Privacy / Security
 
 CryptPad offers a variety of collaborative tools that encrypt your data in your browser
 before it is sent to the server and your collaborators. In the event that the server is
@@ -58,9 +64,9 @@ meet our strict criteria for safety.
 # Translations
 
 CryptPad can be translated with nothing more than a web browser via our
-[Weblate instance](https://weblate.cryptpad.fr/projects/cryptpad/app/). See the state of the translated languages:
+[Weblate instance](https://weblate.cryptpad.org/projects/cryptpad/app/). See the state of the translated languages:
 
-![](https://weblate.cryptpad.fr/widgets/cryptpad/-/app/multi-auto.svg)
+![](https://weblate.cryptpad.org/widgets/cryptpad/-/app/multi-auto.svg)
 
 More information about this can be found in [our translation guide](/customize.dist/translations/README.md).
 
@@ -68,10 +74,7 @@ More information about this can be found in [our translation guide](/customize.d
 
 The best places to reach the development team and the community are the [CryptPad Forum](https://forum.cryptpad.org) and the [Matrix chat](https://matrix.to/#/#cryptpad:matrix.xwiki.com)
 
-The team is also on social media:
-- Mastodon: [@cryptpad@fosstodon.org](https://fosstodon.org/@cryptpad)
-- Twitter: [@cryptpad](https://twitter.com/cryptpad)
-
+The team is also on the fediverse: [@cryptpad@fosstodon.org](https://fosstodon.org/@cryptpad)
 
 # Team
 
@@ -92,7 +95,7 @@ This project is tested with [BrowserStack](https://www.browserstack.com/).
 This software is and will always be available under the GNU Affero General Public License as
 published by the Free Software Foundation, either version 3 of the License, or (at your option)
 any later version. If you wish to use this technology in a proprietary product, please contact
-sales@xwiki.com.
+sales@cryptpad.org
 
 [Tor browser]: https://www.torproject.org/download/
 [active attack]: https://en.wikipedia.org/wiki/Attack_(computing)#Types_of_attack

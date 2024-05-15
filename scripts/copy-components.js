@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 const Fs = require("fs");
 const Fse = require("fs-extra");
 const Path = require("path");
@@ -46,5 +50,6 @@ Fse.rmSync(oldComponentsPath, { recursive: true, force: true });
 ].forEach(l => {
     const source = Path.join("node_modules", l);
     const destination = Path.join(componentsPath, l);
+    Fs.rmSync(destination, { recursive: true, force: true });
     Fs.cpSync(source, destination, { recursive: true });
 });

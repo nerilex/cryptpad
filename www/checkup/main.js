@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     'jquery',
     '/api/config',
@@ -16,13 +20,15 @@ define([
     '/customize/pages.js',
     '/checkup/checkup-tools.js',
     '/customize/application_config.js',
+    '/common/onlyoffice/current-version.js',
 
     '/components/tweetnacl/nacl-fast.min.js',
     'css!/components/components-font-awesome/css/font-awesome.min.css',
     'less!/checkup/app-checkup.less',
 ], function ($, ApiConfig, Assertions, h, Messages, DomReady,
             nThen, SFCommonO, Login, Hash, Util, Pinpad,
-            NetConfig, Block, Pages, Tools, AppConfig) {
+            NetConfig, Block, Pages, Tools, AppConfig,
+            OOCurrentVersion) {
     window.CHECKUP_MAIN_LOADED = true;
 
     var Assert = Assertions();
@@ -320,7 +326,7 @@ define([
         var blockUrl = Login.Block.getBlockUrl(opt.blockKeys);
         console.warn('Testing block URL (%s). One 404 is normal.', blockUrl);
 
-        var userHash = '/2/drive/edit/000000000000000000000000';
+        var userHash = Hash.createRandomHash('drive');
         var secret = Hash.getSecrets('drive', userHash);
         opt.keys = secret.keys;
         opt.channelHex = secret.channel;
@@ -417,7 +423,7 @@ define([
         });
     });
 
-    var sheetURL = '/common/onlyoffice/v5/web-apps/apps/spreadsheeteditor/main/index.html';
+    var sheetURL = `/common/onlyoffice/dist/${OOCurrentVersion.currentVersion}/web-apps/apps/spreadsheeteditor/main/index.html`;
 
     assert(function (cb, msg) {
         msg.innerText = "Missing HTTP headers required for .xlsx export from sheets. ";
@@ -714,7 +720,7 @@ define([
     });
 
     assert(function (cb, msg) { // FIXME possibly superseded by more advanced CSP tests?
-        var url = '/common/onlyoffice/v5/web-apps/apps/spreadsheeteditor/main/index.html';
+        var url = `/common/onlyoffice/dist/${OOCurrentVersion.currentVersion}/web-apps/apps/spreadsheeteditor/main/index.html`;
         msg.appendChild(CSP_WARNING(url));
         deferredPostMessage({
             command: 'GET_HEADER',
@@ -1283,6 +1289,7 @@ define([
 
     // check if they provide legal data
     assert(function (cb, msg) {
+        // eslint-disable-next-line no-constant-condition
         if (true) { return void cb(true); } // FIXME stubbed while we determine whether this is necessary
         if (ApiConfig.restrictRegistration) { return void cb(true); }
 

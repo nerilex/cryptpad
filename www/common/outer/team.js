@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     '/common/common-util.js',
     '/common/common-hash.js',
@@ -149,7 +153,7 @@ define([
         var list = store.manager.getChannelsList('pin');
 
         var team = ctx.store.proxy.teams[id];
-        list.push(team.channel);
+        list.push(`${team.channel}#drive`);
         var chatChannel = Util.find(team, ['keys', 'chat', 'channel']);
         var membersChannel = Util.find(team, ['keys', 'roster', 'channel']);
         var mailboxChannel = Util.find(team, ['keys', 'mailbox', 'channel']);
@@ -319,8 +323,10 @@ define([
                 }
                 ctx.Store.removeOwnedChannel('', data, cb);
             },
-            Store: ctx.Store
+            Store: ctx.Store,
+            store: ctx.store
         }, {
+            teamId: team.id,
             outer: true,
             edPublic: keys.drive.edPublic,
             loggedIn: true,
@@ -423,7 +429,7 @@ define([
         };
         if (channel) {
             ctx.store.anon_rpc.send("IS_NEW_CHANNEL", channel, waitFor(function (e, res) {
-                if (res && res.length && typeof(res[0]) === 'boolean' && res[0]) {
+                if (res && res.length && typeof(res[0]) === 'object' && res[0].isNew) {
                     // Channel is empty: remove this team
                     close();
                 }
@@ -431,7 +437,7 @@ define([
         }
         if (roster) {
             ctx.store.anon_rpc.send("IS_NEW_CHANNEL", roster, waitFor(function (e, res) {
-                if (res && res.length && typeof(res[0]) === 'boolean' && res[0]) {
+                if (res && res.length && typeof(res[0]) === 'object' && res[0].isNew) {
                     // Channel is empty: remove this team
                     close();
                 }

@@ -1,14 +1,19 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 // Load #1, load as little as possible because we are in a race to get the loading screen up.
 define([
     '/components/nthen/index.js',
     '/api/config',
     'jquery',
     '/common/requireconfig.js',
+    '/common/common-util.js',
     '/customize/messages.js',
-], function (nThen, ApiConfig, $, RequireConfig, Messages) {
+], function (nThen, ApiConfig, $, RequireConfig, Util, Messages) {
     var requireConfig = RequireConfig();
 
-    var ready = false;
+    var readyEvt = Util.mkEvent(true);
 
     var create = function (config) {
         // Loaded in load #2
@@ -169,26 +174,24 @@ define([
                 });
 
                 sframeChan.onReady(function () {
-                    if (ready === true) { return; }
-                    if (typeof ready === "function") {
-                        ready();
-                    }
-                    ready = true;
+                    readyEvt.fire();
                 });
             });
         });
         var refresh = function (data, cb) {
-            if (!ready) {
-                ready = function () {
-                    refresh(data, cb);
-                };
-                return;
-            }
-            sframeChan.event('EV_REFRESH', data);
-            cb();
+            readyEvt.reg(() => {
+                sframeChan.event('EV_REFRESH', data);
+                cb();
+            });
+        };
+        var setTitle = function (title) {
+            readyEvt.reg(() => {
+                sframeChan.event('EV_IFRAME_TITLE', title);
+            });
         };
         return {
-            refresh: refresh
+            refresh: refresh,
+            setTitle: setTitle
         };
     };
     return {

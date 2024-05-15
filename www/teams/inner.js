@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     'jquery',
     '/common/toolbar.js',
@@ -237,7 +241,7 @@ define([
         Object.keys(categories).forEach(function (key) {
             if (key === 'admin' && !teamAdmin) { return; }
 
-            var $category = $('<div>', {'class': 'cp-sidebarlayout-category cp-team-cat-'+key}).appendTo($categories);
+            var $category = $('<div>', {'class': 'cp-sidebarlayout-category cp-team-cat-'+key, 'tabindex': 0}).appendTo($categories);
             if (key === 'general') { $category.append($('<span>', {'class': 'fa fa-info-circle'})); }
             if (key === 'list') { $category.append($('<span>', {'class': 'fa fa-list cp-team-cat-list'})); }
             if (key === 'create') { $category.append($('<span>', {'class': 'fa fa-plus-circle'})); }
@@ -252,7 +256,8 @@ define([
                 $category.addClass('cp-leftside-active');
             }
 
-            $category.click(function () {
+            $category.on('click keypress', function (event) {
+                if (event.type === 'click' || (event.type === 'keypress' && event.which === 13)) {
                 if (!Array.isArray(categories[key]) && categories[key].onClick) {
                     categories[key].onClick(common);
                     return;
@@ -273,7 +278,7 @@ define([
                 $categories.find('.cp-leftside-active').removeClass('cp-leftside-active');
                 $category.addClass('cp-leftside-active');
                 showCategories(categories[key]);
-            });
+            }});
 
             $category.append(h('span.cp-sidebarlayout-category-name', Messages['team_cat_'+key] || key));
         });
@@ -393,7 +398,6 @@ define([
         ]);
     });
 
-    var MAX_TEAMS_SLOTS = Constants.MAX_TEAMS_SLOTS;
     var openTeam = function (common, id, team) {
         var sframeChan = common.getSframeChannel();
         APP.module.execCommand('SUBSCRIBE', id, function () {
@@ -421,14 +425,18 @@ define([
             });
         });
     };
-    var canCreateTeams = function (teams) {
+    var canCreateTeams = function (common, teams) {
         var owned = Object.keys(teams || {}).filter(function (id) {
             return teams[id].owner;
         }).length;
-        return Constants.MAX_TEAMS_OWNED - owned;
+        var priv = common.getMetadataMgr().getPrivateData();
+        var MAX_TEAMS_OWNED = priv.plan ? Constants.MAX_PREMIUM_TEAMS_OWNED : Constants.MAX_TEAMS_OWNED;
+        return MAX_TEAMS_OWNED - owned;
     };
     var refreshList = function (common, cb) {
         var content = [];
+        var priv = common.getMetadataMgr().getPrivateData();
+        var MAX_TEAMS_SLOTS = priv.plan ? Constants.MAX_PREMIUM_TEAMS_SLOTS : Constants.MAX_TEAMS_SLOTS;
         APP.module.execCommand('LIST_TEAMS', null, function (obj) {
             if (!obj) { return; }
             if (obj.error === "OFFLINE") { return UI.alert(Messages.driveOfflineError); }
@@ -436,7 +444,7 @@ define([
             var list = [];
             var keys = Object.keys(obj).slice(0,MAX_TEAMS_SLOTS);
             var slots = '('+Math.min(keys.length, MAX_TEAMS_SLOTS)+'/'+MAX_TEAMS_SLOTS+')';
-            var createSlots = canCreateTeams(obj);
+            var createSlots = canCreateTeams(common, obj);
             for (var i = keys.length; i < MAX_TEAMS_SLOTS; i++) {
                 obj[i] = {
                     empty: true
@@ -469,20 +477,26 @@ define([
                     created++;
                 }
                 if (team.empty) {
-                    var createTeamDiv = h('div.cp-team-list-team.empty'+createCls, [
+                    var createTeamDiv = h('div.cp-team-list-team.empty'+createCls,{
+                        tabindex: '0'
+                    }, [
                         h('span.cp-team-list-name.empty', Messages.team_listSlot),
                         createBtn
                     ]);
                     list.push(createTeamDiv);
                     if (createCls) {
-                        $(createTeamDiv).click(function () {
-                            $('div.cp-team-cat-create').click();
+                        $(createTeamDiv).on('click keypress', function (event) {
+                            if (event.type === 'click' || (event.type === 'keypress' && event.which === 13)) {
+                                $('div.cp-team-cat-create').click();
+                            }
                         });
                     }
                     return;
                 }
                 var avatar = h('span.cp-avatar');
-                var teamDiv = h('div.cp-team-list-team', [
+                var teamDiv = h('div.cp-team-list-team',{
+                        tabindex: '0'
+                    }, [
                     h('span.cp-team-list-avatar', avatar),
                     h('span.cp-team-list-name', {
                         title: team.metadata.name
@@ -490,12 +504,14 @@ define([
                 ]);
                 list.push(teamDiv);
                 common.displayAvatar($(avatar), team.metadata.avatar, team.metadata.name);
-                $(teamDiv).click(function () {
-                    if (team.error) {
-                        UI.warn(Messages.error); // FIXME better error message - roster bug, can't load the team for now
-                        return;
+                $(teamDiv).on('click keypress', function (event) {
+                    if (event.type === 'click' || (event.type === 'keypress' && event.which === 13)) {
+                        if (team.error) {
+                            UI.warn(Messages.error); // FIXME better error message - roster bug, can't load the team for now
+                            return;
+                        }
+                        openTeam(common, id, team);
                     }
-                    openTeam(common, id, team);
                 });
             });
             content.push(h('div.cp-team-list-container', list));
@@ -513,9 +529,12 @@ define([
         var privateData = metadataMgr.getPrivateData();
         var content = [];
 
+        var MAX_TEAMS_OWNED = privateData.plan ? Constants.MAX_PREMIUM_TEAMS_OWNED : Constants.MAX_TEAMS_OWNED;
+        var MAX_TEAMS_SLOTS = privateData.plan ? Constants.MAX_PREMIUM_TEAMS_SLOTS : Constants.MAX_TEAMS_SLOTS;
+
         var isOwner = Object.keys(privateData.teams || {}).filter(function (id) {
             return privateData.teams[id].owner;
-        }).length >= Constants.MAX_TEAMS_OWNED && !privateData.devMode;
+        }).length >= MAX_TEAMS_OWNED && !privateData.devMode;
 
         var getWarningBox = function () {
             return h('div.alert.alert-warning', {
@@ -523,14 +542,15 @@ define([
             }, Messages._getKey('team_maxTeams', [MAX_TEAMS_SLOTS]));
         };
 
-        if (Object.keys(privateData.teams || {}).length >= Constants.MAX_TEAMS_SLOTS || isOwner) {
+        if (Object.keys(privateData.teams || {}).length >= MAX_TEAMS_SLOTS || isOwner) {
             content.push(getWarningBox());
             return void cb(content);
         }
 
         content.push(h('h3', Messages.team_createLabel));
-        content.push(h('label', Messages.team_createName));
-        var input = h('input', {type:'text'});
+        let label = h('label', { for: 'cp-team-name' } , Messages.team_createName);
+        content.push(label);
+        let input = h('input#cp-team-name', {type:'text', maxlength:50});
         content.push(input);
         var button = h('button.btn.btn-success', Messages.creation_create);
         content.push(h('br'));
@@ -543,6 +563,7 @@ define([
             if (state) { return; }
             var name = $(input).val();
             if (!name.trim()) { return; }
+            if(name.length > 50) { return UI.warn(Messages.team_nameTooLong); }
             state = true;
             $spinner.show();
             APP.module.execCommand('CREATE_TEAM', {
@@ -838,8 +859,9 @@ define([
                     var privateData = common.getMetadataMgr().getPrivateData();
                     var origin = privateData.origin;
                     var href = origin + Hash.hashToHref(data.hash, 'teams');
-                    var success = Clipboard.copy(href);
-                    if (success) { UI.log(Messages.shareSuccess); }
+                    Clipboard.copy(href, (err) => {
+                        if (!err) { UI.log(Messages.shareSuccess); }
+                    });
                 }).prependTo(actions);
             }
             content = [
@@ -1024,7 +1046,7 @@ define([
         if (publicKey) {
             var $key = $('<div>', {'class': 'cp-sidebarlayout-element'}).appendTo($div);
             var userHref = Hash.getPublicSigningKeyString(privateData.origin, name, publicKey);
-            var $pubLabel = $('<span>', {'class': 'label'})
+            var $pubLabel = $('<span>', {'class': 'cp-default-label'})
                 .text(Messages.settings_publicSigningKey);
             $key.append($pubLabel).append(UI.dialog.selectable(userHref));
         }
@@ -1046,11 +1068,17 @@ define([
         var todo = function () {
             var newName = $input.val();
             if (!newName.trim()) { return; }
-            $spinner.show();
+            if(newName.length > 50){
+                return UI.warn(Messages.team_nameTooLong);
+            }
             APP.module.execCommand('GET_TEAM_METADATA', {
                 teamId: APP.team
             }, function (obj) {
                 if (obj && obj.error) { return void UI.warn(Messages.error); }
+                if (obj.name === newName) {
+                    return void UI.warn(Messages._getKey('team_nameAlreadySet', [Util.fixHTML(newName)]));
+                }
+                $spinner.show();
                 var oldName = obj.name;
                 obj.name = newName;
                 APP.module.execCommand('SET_TEAM_METADATA', {
@@ -1244,12 +1272,13 @@ define([
         var password = hashData.password;
         var seeds = InviteInner.deriveSeeds(hashData.key);
         var sframeChan = common.getSframeChannel();
+        var MAX_TEAMS_SLOTS = privateData.plan ? Constants.MAX_PREMIUM_TEAMS_SLOTS : Constants.MAX_TEAMS_SLOTS;
 
-        if (Object.keys(privateData.teams || {}).length >= Constants.MAX_TEAMS_SLOTS) {
+        if (Object.keys(privateData.teams || {}).length >= MAX_TEAMS_SLOTS) {
             return void cb([
                 h('div.alert.alert-danger', {
                     role: 'alert'
-                }, Messages._getKey('team_maxTeams', [Constants.MAX_TEAMS_SLOTS]))
+                }, Messages._getKey('team_maxTeams', [MAX_TEAMS_SLOTS]))
             ]);
         }
 
@@ -1456,7 +1485,6 @@ define([
 
     var main = function () {
         var common;
-        var readOnly;
 
         nThen(function (waitFor) {
             $(waitFor(function () {
@@ -1478,7 +1506,7 @@ define([
             var privateData = metadataMgr.getPrivateData();
             var user = metadataMgr.getUserData();
 
-            readOnly = driveAPP.readOnly = metadataMgr.getPrivateData().readOnly;
+            driveAPP.readOnly = metadataMgr.getPrivateData().readOnly;
 
             driveAPP.loggedIn = common.isLoggedIn();
             //if (!driveAPP.loggedIn) { throw new Error('NOT_LOGGED_IN'); }

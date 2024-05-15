@@ -1,12 +1,17 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     '/common/hyperscript.js',
     '/common/common-language.js',
+    '/common/common-util.js',
     '/customize/application_config.js',
     '/customize/messages.js',
     'jquery',
     '/api/config',
     'optional!/api/instance',
-], function (h, Language, AppConfig, Msg, $, ApiConfig, Instance) {
+], function (h, Language, Util, AppConfig, Msg, $, ApiConfig, Instance) {
     var Pages = {};
 
     Pages.setHTML = function (e, html) {
@@ -56,16 +61,15 @@ define([
     };
 
     var languageSelector = function () {
-        var options = [];
         var languages = Msg._languages;
         var selected = Msg._languageUsed;
         var keys = Object.keys(languages).sort();
-        keys.forEach(function (l) {
-            var attr = { value: l, role: 'option'};
+        var options = keys.map(function (l) {
+            var attr = { value: l };
             if (selected === l) { attr.selected = 'selected'; }
-            options.push(h('option', attr, languages[l]));
+            return h('option', attr, languages[l]);
         });
-        var select = h('select', {role: 'listbox', 'label': 'language'}, options);
+        var select = h('select', { 'aria-label': Msg.selectLanguage }, options);
         $(select).change(function () {
             Language.setLanguage($(select).val() || '', null, function () {
                 window.location.reload();
@@ -95,7 +99,8 @@ define([
         return h('a', attrs, [icon, text]);
     };
 
-    Pages.versionString = "5.4.1";
+    let urlArgs = ApiConfig.requireConf && ApiConfig.requireConf.urlArgs;
+    Pages.versionString = Util.getVersionFromUrlArgs(urlArgs);
 
     var customURLs = Pages.customURLs = {};
     (function () {
@@ -103,7 +108,7 @@ define([
             source: 'https://github.com/cryptpad/cryptpad',
         };
         var l = Msg._getLanguage();
-        ['imprint', 'privacy', 'terms', 'roadmap', 'source'].forEach(function (k) {
+        ['imprint', 'privacy', 'terms', 'status', 'roadmap', 'source'].forEach(function (k) {
             var value = AppConfig[k];
             //console.log('links', k, value);
             if (value === false) { return; }

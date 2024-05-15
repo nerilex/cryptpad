@@ -1,14 +1,18 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 (function () {
 var logoPath = '/customize/CryptPad_logo.svg';
 if (location.pathname === '/' || location.pathname === '/index.html') {
-    logoPath = '/customize/CryptPad_logo_hero.svg';
+    logoPath = '/api/logo';
 }
 
 var elem = document.createElement('div');
 elem.setAttribute('id', 'placeholder');
 elem.innerHTML = [
     '<div class="placeholder-logo-container">',
-        '<img class="placeholder-logo" src="' + logoPath + '">',
+        '<img class="placeholder-logo" alt="CryptPad Logo" src="' + logoPath + '">',
     '</div>',
     '<div class="placeholder-message-container">',
         '<p>Loading...</p>',

@@ -1,7 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 @import (reference) '../../customize/src/less2/include/framework.less';
 @import (reference) '../../customize/src/less2/include/tools.less';
 @import (reference) '../../customize/src/less2/include/avatar.less';
 @import (reference) '../../customize/src/less2/include/charts.less';
+@import (reference) '../../customize/src/less2/include/markdown.less';
 
 &.cp-app-form {
     @form_input-width: 400px;
@@ -77,6 +84,12 @@
         }
     }
     .checkmark-colors(@form-colors2; length(@form-colors2));
+
+    [data-type="md"] {
+        .cp-form-block-content {
+            .markdown_cryptpad();
+        }
+    }
 
     .cp-form-palette {
         &.cp-form-palette-nocolor {
@@ -604,6 +617,7 @@
                             }
                         }
                     }
+
                     .cp-form-block-content {
                         p {
                             a {
@@ -633,6 +647,12 @@
                             margin-top: 20px;
                             display: flex;
                             justify-content: space-between;
+                        }
+                        .cp-form-copy-button {
+                            margin-right: 5px;
+                        }
+                        .cp-empty-poll-edit-buttons {
+                            padding-top: 40px
                         }
                         input:invalid {
                             border: 2px solid @cryptpad_color_red;
@@ -766,6 +786,9 @@
                         &.sortable-drag { opacity: 0.9 !important; }
                         display: flex;
                         width: 400px;
+                        @media (max-width:460px) {
+                            width: 100%
+                        }
                         input {
                             flex: 1;
                             min-width: 100px;
@@ -801,6 +824,7 @@
                 padding-bottom: 20px;
             }
             .cp-form-submit-success {
+                margin: 20px;
                 div.cp-form-submit-success-actions {
                     button:not(:last-child) {
                         margin-right: 10px;

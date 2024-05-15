@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 /* globals process */
 
 var Client = require("../../lib/client/");
@@ -245,11 +249,10 @@ var createUser = function (config, cb) {
         }));
     }).nThen(function () {
 
-        user.cleanup = function (cb) {
+        user.cleanup = function (/* cb */) {
             //console.log("Destroying user");
             // TODO remove your mailbox
             user.destroy.fire();
-            cb = cb;
         };
 
         cb(void 0, user);
@@ -893,13 +896,14 @@ nThen(function  (w) {
             text: "CAMEMBERT",
         }
     }), bob.curveKeys.curvePublic);
-    alice.anonRpc.send('WRITE_PRIVATE_MESSAGE', [bob.mailboxChannel, message], w(function (err, response) {
+    alice.anonRpc.send('WRITE_PRIVATE_MESSAGE', [bob.mailboxChannel, message], w(function (err/*, response*/) {
         if (err) {
             return void console.error(err);
         }
 
         // TODO validate that the write was actually successful by checking its size
-        response = response;
+        //response = response;
+
         // shutdown doesn't work, so we need to do this instead
     }));
 }).nThen(function () {

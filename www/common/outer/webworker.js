@@ -1,4 +1,9 @@
-/* jshint ignore:start */
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+/* global importScripts */
+
 importScripts('/components/requirejs/require.js');
 
 window = self;
