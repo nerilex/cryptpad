@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define(['/api/config'], function (ApiConfig) {
 /*  The 'bounce app' provides a unified way to do the following things in CryptPad
 
@@ -77,7 +81,7 @@ define(['/api/config'], function (ApiConfig) {
         // Inform the user that we won't navigate and that the 'bounce tab' will be closed.
         // our linter warns when it sees 'javascript:' because it doesn't distinguish between
         // detecting this pattern and using it, so we ignore this line
-        if (['javascript:', 'vbscript:', 'data:', 'blob:'].includes(target.protocol)) { // jshint ignore:line
+        if (['javascript:', 'vbscript:', 'data:', 'blob:'].includes(target.protocol)) {
             window.alert(Messages._getKey('bounce_danger', [target.href]));
             return void reject();
         }

@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 @import (reference) "./browser.less";
 @import (reference) './leftside-menu.less';
 @import (reference) "./tools.less";
@@ -48,7 +54,9 @@
                 width: 100%;
                 height: 24px;
                 margin: 0;
-                display: inline-block;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 14px;
                 //align-items: center;
                 //justify-content: center;
@@ -128,9 +136,9 @@
         }
     }
 
-    div:focus {
-        outline: none;
-    }
+    //div:focus {
+    //    outline: none;
+    //}
 
     .fa {
         font-family: FontAwesome;
@@ -478,6 +486,7 @@
         flex-flow: column;
         flex: 1;
         min-width: 0;
+        min-height: 100%;
         position: relative;
         .cp-splitter {
             position: absolute;
@@ -506,6 +515,9 @@
         }
     }
     #cp-app-drive-content {
+        &:focus {
+            outline: none;
+        }
         box-sizing: border-box;
         background: @cp_sidebar-right-bg;
         color: @cp_sidebar-right-fg;
@@ -546,7 +558,7 @@
         }
         li {
             cursor: default;
-            &:not(.cp-app-drive-element-header) {
+            &:not(.cp-app-drive-element-header):not([role="menuitem"]) {
                 &:hover {
                     &:not(.-cp-app-drive-element-selected, .cp-app-drive-element-selected-tmp) {
                         background-color: @cp_drive-icon-hover;
@@ -649,21 +661,37 @@
                     font-size: 14px;
                     height: auto;
                 }
-                .cp-app-drive-element-state {
+                .cp-app-drive-element-state, .cp-app-drive-element-menu {
                     position: absolute;
                     top: 3px;
-                    right: 3px;
                     .fa, .cptools {
                         margin: 0;
                         font-size: 18px;
                     }
+                }
+                .cp-app-drive-element-icon {
+                    font-size: 0.9rem;
+                    margin: 0;
+                    margin-right: 0.3rem;
+                }
+                .cp-app-drive-element-name-text {
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
+
+                .cp-app-drive-element-state {
+                    left: 3px;
+                }
+                .cp-app-drive-element-menu {
+                    right: 3px;
                 }
                 .cp-app-drive-element-thumbnail {
                     max-width: 100px;
                     max-height: 100px;
                     background: @cp_drive-thumb-bg;
                     & ~ .fa, & ~ .cptools {
-                        display: inline;
+                        display: none;
                         font-size: 17px;
                         position: absolute;
                         top: 3px;
@@ -686,6 +714,9 @@
         }
 
         div.cp-app-drive-content-list {
+            .cp-app-drive-element-icon {
+                display: none !important;
+            }
             .cp-app-drive-element-grid {
                 display: none;
             }
@@ -1005,6 +1036,13 @@
                 height: @variables_bar-height;
                 display: flex;
                 align-items: center;
+            }
+        }
+        .cp-dropdown-container {
+            button {
+                .cp-icon {
+                    margin-left: 5px;
+                }
             }
         }
     }

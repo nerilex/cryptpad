@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     '/api/config',
     'json.sortify',
@@ -14,6 +18,7 @@ define([
     '/common/outer/cache-store.js',
     '/common/outer/sharedfolder.js',
     '/common/outer/cursor.js',
+    '/common/outer/support.js',
     '/common/outer/integration.js',
     '/common/outer/onlyoffice.js',
     '/common/outer/mailbox.js',
@@ -35,7 +40,7 @@ define([
     '/components/saferphore/index.js',
 ], function (ApiConfig, Sortify, UserObject, ProxyManager, Migrate, Hash, Util, Constants, Feedback,
              Realtime, Messaging, Pinpad, Cache,
-             SF, Cursor, Integration, OnlyOffice, Mailbox, Profile, Team, Messenger, History,
+             SF, Cursor, Support, Integration, OnlyOffice, Mailbox, Profile, Team, Messenger, History,
              Calendar, Block, NetConfig, AppConfig,
              Crypto, ChainPad, CpNetflux, Listmap, Netflux, nThen, Saferphore) {
 
@@ -203,7 +208,7 @@ define([
         };
 
         var getUserChannelList = function () {
-            var userChannel = store.driveChannel;
+            var userChannel = `${store.driveChannel}#drive`;
             if (!userChannel) { return null; }
 
             // Get the list of pads' channel ID in your drive
@@ -245,6 +250,11 @@ define([
             }
 
             list.push(userChannel);
+
+            if (store.data && store.data.blockId) {
+                //list.push(`${store.data.blockId}#block`); // NEXT 5.7.0?
+            }
+
             list.sort();
 
             return list;
@@ -298,7 +308,7 @@ define([
             });
         };
 
-        var account = {};
+        var account = store.account = {};
 
         Store.getPinnedUsage = function (clientId, data, cb) {
             var s = getStore(data && data.teamId);
@@ -360,10 +370,12 @@ define([
             var channel = data;
             var force = false;
             var teamId;
+            var reason;
             if (data && typeof(data) === "object") {
                 channel = data.channel;
                 force = data.force;
                 teamId = data.teamId;
+                reason = data.reason;
             }
 
             if (channel === store.driveChannel && !force) {
@@ -380,7 +392,7 @@ define([
             s.rpc.removeOwnedChannel(channel, function (err) {
                 if (err) { delete myDeletions[channel]; }
                 cb({error:err});
-            });
+            }, reason);
         };
 
         var arePinsSynced = function (cb) {
@@ -507,11 +519,9 @@ define([
             var channelId = data.channel || Hash.hrefToHexChannelId(data.href, data.password);
             store.anon_rpc.send("IS_NEW_CHANNEL", channelId, function (e, response) {
                 if (e) { return void cb({error: e}); }
-                if (response && response.length && typeof(response[0]) === 'boolean') {
-                    if (response[0]) { Cache.clearChannel(channelId); }
-                    return void cb({
-                        isNew: response[0]
-                    });
+                if (response && response.length && typeof(response[0]) === 'object') {
+                    if (response[0].isNew) { Cache.clearChannel(channelId); }
+                    return void cb(response[0]);
                 } else {
                     cb({error: 'INVALID_RESPONSE'});
                 }
@@ -622,7 +632,6 @@ define([
                     settings: proxy.settings || NEW_USER_SETTINGS,
                     thumbnails: disableThumbnails === false,
                     isDriveOwned: Boolean(Util.find(store, ['driveMetadata', 'owners'])),
-                    support: Util.find(proxy, ['mailboxes', 'support', 'channel']),
                     driveChannel: store.driveChannel,
                     pendingFriends: proxy.friends_pending || {},
                     supportPrivateKey: Util.find(proxy, ['mailboxes', 'supportadmin', 'keys', 'curvePrivate']),
@@ -634,6 +643,7 @@ define([
                 }
             };
             cb(JSON.parse(JSON.stringify(metadata)));
+            return metadata;
         };
 
         Store.onMaintenanceUpdate = function (uid) {
@@ -704,6 +714,7 @@ define([
             if (data.channel || secret) { pad.channel = data.channel || secret.channel; }
             if (data.readme) { pad.readme = 1; }
 
+            if (data.teamId === -1) { data.teamId = undefined; }
             var s = getStore(data.teamId);
             if (!s || !s.manager) { return void cb({ error: 'ENOTFOUND' }); }
 
@@ -850,7 +861,6 @@ define([
                 // Owned drive
                 if (metadata && metadata.owners && metadata.owners.length === 1 &&
                     metadata.owners.indexOf(edPublic) !== -1) {
-                    var token;
                     nThen(function (waitFor) {
                         Block.checkRights({
                             auth: auth,
@@ -865,8 +875,7 @@ define([
                     }).nThen(function (waitFor) {
                         self.accountDeletion = clientId;
                         // Log out from other workers
-                        var token = Math.floor(Math.random()*Number.MAX_SAFE_INTEGER);
-                        store.proxy[Constants.tokenKey] = token;
+                        store.proxy[Constants.tokenKey] = 'DELETED';
                         onSync(null, waitFor());
                     }).nThen(function (waitFor) {
                         // Delete Pin Store
@@ -875,6 +884,7 @@ define([
                         }));
                     }).nThen(function (waitFor) {
                         // Delete Drive
+                        store.ownDeletion = true;
                         Store.removeOwnedChannel(clientId, {
                             channel: store.driveChannel,
                             force: true
@@ -882,7 +892,9 @@ define([
                     }).nThen(function (waitFor) {
                         if (!blockKeys) { return; }
                         Block.removeLoginBlock({
+                            reason: 'ARCHIVE_OWNED',
                             auth: auth,
+                            edPublic: edPublic,
                             blockKeys: blockKeys,
                         }, waitFor(function (err) {
                             if (err) { console.error(err); }
@@ -891,7 +903,8 @@ define([
                         removeOwnedPads(true, waitFor);
                     }).nThen(function () {
                         // Log out current worker
-                        postMessage(clientId, "DELETE_ACCOUNT", token, function () {});
+                        broadcast([clientId], "DRIVE_DELETED", 'ARCHIVE_OWNED');
+                        postMessage(clientId, "DELETE_ACCOUNT", 'DELETED', function () {});
                         store.network.disconnect();
                         cb({
                             state: true
@@ -1175,7 +1188,6 @@ define([
             }
 
             //var storeLocally = data.teamId === -1;
-            if (data.teamId === -1) { data.teamId = undefined; }
             if (data.teamId) { data.teamId = Number(data.teamId); }
 
             // If a teamId is provided, it means we want to store the pad in a specific
@@ -1391,7 +1403,7 @@ define([
 
         // Hidden hash: if a pad is deleted, we may have to switch back to full hash
         // in some tabs
-        Store.checkDeletedPad = function (channel) {
+        Store.checkDeletedPad = function (channel, cb) {
             if (!channel) { return; }
 
             // Check if the pad is still stored in one of our drives
@@ -1399,6 +1411,7 @@ define([
                 channel: channel,
                 isFile: true // we don't care if it's view or edit
             }, function (res) {
+                if (typeof(cb) === "function") { setTimeout(cb); }
                 // If it is stored, abort
                 if (Object.keys(res).length) { return; }
                 // Otherwise, tell all the tabs that this channel was deleted and give them the hrefs
@@ -1603,22 +1616,24 @@ define([
             });
         };
         Store.addAdminMailbox = function (clientId, data, cb) {
-            var priv = data;
+            var priv = data && data.priv;
             var pub = Hash.getBoxPublicFromSecret(priv);
+            var isNewSupport = data && data.version === 2;
             if (!priv || !pub) { return void cb({error: 'EINVAL'}); }
             var channel = Hash.getChannelIdFromKey(pub);
             var mailboxes = store.proxy.mailboxes = store.proxy.mailboxes || {};
-            var box = mailboxes.supportadmin = {
+            var key = isNewSupport ? 'supportteam' : 'supportadmin';
+            var box = mailboxes[key] = {
                 channel: channel,
                 viewed: [],
-                lastKnownHash: '',
+                lastKnownHash: data.lastKnownHash || '',
                 keys: {
                     curvePublic: pub,
                     curvePrivate: priv
                 }
             };
             Store.pinPads(null, [channel], function () {});
-            store.mailbox.open('supportadmin', box, function () {
+            store.mailbox.open(key, box, function () {
                 console.log('ready');
             });
             onSync(null, cb);
@@ -2387,6 +2402,8 @@ define([
         Store.loadSharedFolder = function (teamId, id, data, cb, isNew) {
             var s = getStore(teamId);
             if (!s) { return void cb({ error: 'ENOTFOUND' }); }
+            var parsed = Hash.parsePadUrl(data.href || data.roHref);
+            if (!parsed && !parsed.hashData) { return void cb({error: 'EINVAL'}); }
             SF.load({
                 isNew: isNew,
                 network: store.network || store.networkPromise,
@@ -2720,6 +2737,7 @@ define([
                 loadSharedFolder: loadSharedFolder,
                 settings: proxy.settings,
                 removeOwnedChannel: function (channel, cb) { Store.removeOwnedChannel('', channel, cb); },
+                store: store,
                 Store: Store
             }, {
                 outer: true,
@@ -2818,6 +2836,7 @@ define([
                 loadUniversal(Calendar, 'calendar', waitFor);
                 if (store.modules['team']) { store.modules['team'].onReady(waitFor); }
                 loadUniversal(History, 'history', waitFor);
+                loadUniversal(Support, 'support', waitFor);
             }).nThen(function () {
                 var requestLogin = function () {
                     broadcast([], "REQUEST_LOGIN");
@@ -2913,6 +2932,7 @@ define([
                     broadcast([], "UPDATE_METADATA");
                 });
                 proxy.on('change', [Constants.tokenKey], function () {
+                    if (store.isDeleted || proxy[Constants.tokenKey] === 'DELETED') { return; }
                     broadcast([], "UPDATE_TOKEN", { token: proxy[Constants.tokenKey] });
                 });
 
@@ -3012,6 +3032,12 @@ define([
                 if (!rt.proxy.form_seed && data.form_seed) {
                     rt.proxy.form_seed = data.form_seed;
                 }
+
+                if (rt.proxy.edPublic && Array.isArray(ApiConfig.adminKeys) &&
+                    ApiConfig.adminKeys.indexOf(rt.proxy.edPublic) !== -1) {
+                    store.isAdmin = true;
+                }
+
                 /*
                 // deprecating localStorage migration as of 4.2.0
                 var drive = rt.proxy.drive;
@@ -3029,11 +3055,6 @@ define([
                     });
                 }
 
-                if (rt.proxy.edPublic && Array.isArray(ApiConfig.adminKeys) &&
-                    ApiConfig.adminKeys.indexOf(rt.proxy.edPublic) !== -1) {
-                    store.isAdmin = true;
-                }
-
                 onReady(clientId, returned, cb);
             })
             .on('change', ['drive', 'migrate'], function () {
@@ -3043,6 +3064,13 @@ define([
                     rt.network.disconnect();
                     rt.realtime.abort();
                     sendDriveEvent('NETWORK_DISCONNECT');
+                }
+            })
+            .on('error', function (info) {
+                if (info.error && info.error === 'EDELETED') {
+                    if (store.ownDeletion) { return; }
+                    store.isDeleted = true;
+                    broadcast([], "DRIVE_DELETED", info.message);
                 }
             });
 

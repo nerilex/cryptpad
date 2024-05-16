@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 @import (reference) '../../customize/src/less2/include/framework.less';
 @import (reference) '../../customize/src/less2/include/drive.less';
 @import (reference) '../../customize/src/less2/include/messenger.less';
@@ -6,6 +12,9 @@
 @import (reference) "../../customize/src/less2/include/colortheme-all.less";
 @import (reference) '../../customize/src/less2/include/export.less';
 
+.fa-spinner,.fa-check{
+    margin-left:0.5rem;
+}
 
 &.cp-app-team {
     .framework_min_main(
@@ -143,14 +152,13 @@
                     .avatar_main(200px);
                 }
                 .cp-team-list-name {
+                    word-wrap: break-word;
                     min-width: 0;
-                    overflow: hidden;
-                    white-space: nowrap;
+                    white-space: pre-wrap;
                     text-overflow: ellipsis;
-                    max-width: 500px;
+                    max-width: 250px;
                     font-size: 25px;
-                    display: inline-flex;
-                    align-items: center;
+                    text-align: center;
                     &.empty {
                         white-space: initial;
                         text-align: center;
@@ -285,7 +293,7 @@
         }
     }
 
-    .cp-teams-invite-uses { // XXX
+    .cp-teams-invite-uses {
         input {
             margin-bottom: 0px !important;
             margin-right: 10px;

@@ -1,10 +1,14 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 // Stage 0, this gets cached which means we can't change it. boot2-sframe.js is changable.
 // Note that this file is meant to be executed only inside of a sandbox iframe.
 //
 // IF YOU EDIT THIS FILE, bump the version (replace 1.3 in the following command with the next version.)
 // grep -nr '/common/sframe-boot.js?ver=' | sed 's/:.*$//' | grep -v 'sframe-boot.js' | while read x; do \
 //    sed -i -e 's@/common/sframe-boot.js?ver=[^"]*@/common/sframe-boot.js?ver=1.3@' $x; done
-;(function () {
+(function () {
 
 var _alert = function (cb) {
     return void require([
@@ -41,7 +45,7 @@ if (typeof(Promise) !== 'function') {
 var caughtEval;
 console.log("Testing if CSP correctly blocks an 'eval' call");
 try {
-    eval('true'); // jshint ignore:line
+    eval('true');
 } catch (err) { caughtEval = true; }
 
 if (!/^\/(sheet|doc|presentation|unsafeiframe)/.test(window.location.pathname) && !caughtEval) {

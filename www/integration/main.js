@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     '/common/sframe-common-outer.js',
     '/common/common-hash.js',
@@ -10,7 +14,7 @@ define([
         console.warn('INIT');
         var p = window.parent;
         var txid = getTxid();
-        p.postMessage(JSON.stringify({ q: 'INTEGRATION_READY', txid: txid }), '*');
+        p.postMessage({ q: 'INTEGRATION_READY', txid: txid }, '*');
 
         var makeChan = function () {
             var handlers = {};
@@ -34,6 +38,7 @@ define([
 
                 // On new command
                 var msg = data.msg;
+                if (!msg) { return; }
                 var txid = data.txid;
                 if (commands[msg.q]) {
                     commands[msg.q](msg.data, function (args) {
@@ -68,7 +73,7 @@ define([
         };
         var chan = makeChan();
 
-        var isNew = false;
+        //var isNew = false;
         var checkSession = function (oldKey, cb) {
             var channel = Hash.hrefToHexChannelId(Hash.hashToHref(oldKey));
             var prefix = channel.slice(0,2);
@@ -92,7 +97,7 @@ define([
         };
         chan.on('GET_SESSION', function (data, cb) {
             var getHash = function () {
-                isNew = true;
+                //isNew = true;
                 return Hash.createRandomHash('integration');
             };
             var oldKey = data.key;
@@ -118,6 +123,9 @@ define([
         var onHasUnsavedChanges = function (unsavedChanges, cb) {
             chan.send('HAS_UNSAVED_CHANGES', unsavedChanges, cb);
         };
+        var onInsertImage = function (data, cb) {
+            chan.send('ON_INSERT_IMAGE', data, cb);
+        };
 
         chan.on('START', function (data) {
             console.warn('INNER START', data);
@@ -135,7 +143,8 @@ define([
                 utils: {
                     save: save,
                     reload: reload,
-                    onHasUnsavedChanges: onHasUnsavedChanges
+                    onHasUnsavedChanges: onHasUnsavedChanges,
+                    onInsertImage: onInsertImage
                 }
             };
             require(['/common/sframe-app-outer.js'], function () {

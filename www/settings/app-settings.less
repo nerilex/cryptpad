@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
 @import (reference) '../../customize/src/less2/include/sidebar-layout.less';
 @import (reference) "../../customize/src/less2/include/limit-bar.less";
 @import (reference) "../../customize/src/less2/include/creation.less";
@@ -25,6 +31,13 @@
 
     .export_main();
 
+    .cp-settings-displayname .fa{
+        margin-left: 0.5rem;
+    }
+    .cp-settings-mediatag-size .fa{
+        margin-left: 0.5rem;
+    }
+
     #cp-sidebarlayout-container {
         #cp-sidebarlayout-rightside {
             input[type="checkbox"] {
@@ -46,7 +59,7 @@
                     display: inline;
                 }
                 button.btn {
-                    width: @sidebar_button-width;
+                    width: @sidebar_block-width;
                     max-width: 100%;
                     margin: 0 !important;
                 }
@@ -72,7 +85,7 @@
             }
             .cp-settings-info-block {
                 [type="text"] {
-                    width: @sidebar_button-width;
+                    width: @sidebar_block-width;
                     max-width: 100%;
                 }
             }
@@ -82,7 +95,8 @@
                 align-items: center;
                 flex-wrap: wrap;
                 label {
-                    margin-right: 40px;
+                    padding-right: 1rem;
+                    padding-bottom:0.5rem;
                 }
             }
 
@@ -91,7 +105,7 @@
                     margin-top:0.5rem;
                 }
                 [type="password"], [type="text"] {
-                    //width: @sidebar_button-width;
+                    //width: @sidebar_block-width;
                     flex: unset;
                 }
                 button {

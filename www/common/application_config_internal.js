@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 /*
  * This is an internal configuration file.
  * If you want to change some configurable values, use the '/customize/application_config.js'
@@ -113,6 +117,12 @@ define(function() {
      */
     AppConfig.roadmap = false;
 
+    /* If you have a status page for your instance, you may use the setting belox
+     *
+     * See the comments above for a description of possible configurations.
+     */
+    AppConfig.status = false;
+
     /* By default CryptPad instances display some text on the home page indicating that
      * they are an independent community instance of the software. You can provide customized messages
      * by filling in the following data structure with strings for each language you intend to support.
@@ -205,6 +215,7 @@ define(function() {
         teams: 'fa-users',
         admin: 'fa-gears',
         settings: 'fa-gear',
+        moderation: 'fa-ambulance',
         profile: 'fa-user-circle',
         support: 'fa-life-ring',
         accounts: 'fa-ticket'
@@ -263,6 +274,10 @@ define(function() {
     // users don't use "fake" teams (1 member) just to increase their storage limit.
     // You can change the value here.
     // AppConfig.maxOwnedTeams = 5;
+
+    // Same settings but for premium users (users with a custom limit included)
+    // AppConfig.maxPremiumTeamsSlots = 10;
+    // AppConfig.maxPremiumTeamsOwned = 10;
 
     // The userlist displayed in collaborative documents is stored alongside the document data.
     // Everytime someone with edit rights joins a document or modify their user data (display

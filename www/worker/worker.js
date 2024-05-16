@@ -1,6 +1,10 @@
-/* jshint ignore:start */
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
-var window = self;
+/* eslint-env worker */
+
+var window = self;  // eslint-disable-line no-unused-vars
 var localStorage = {
     setItem: function (k, v) { localStorage[k] = v; },
     getItem: function (k) { return localStorage[k]; }

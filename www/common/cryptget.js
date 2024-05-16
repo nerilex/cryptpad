@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     '/components/chainpad-crypto/crypto.js',
     'chainpad-netflux',
@@ -193,6 +197,11 @@ define([
                 finish(Session, void 0, doc);
             });
         };
+
+        config.onChannelError = function (info) {
+            finish(Session, info);
+        };
+
         overwrite(config, opt);
 
         start(Session, config);

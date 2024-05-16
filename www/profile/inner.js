@@ -1,4 +1,9 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
+    '/api/config',
     'jquery',
     '/components/chainpad-crypto/crypto.js',
     'chainpad-listmap',
@@ -19,7 +24,8 @@ define([
     '/common/sframe-common-codemirror.js',
     'cm/lib/codemirror',
 
-    'cm/mode/markdown/markdown',
+    'cm/mode/gfm/gfm',
+
 
     'css!/components/codemirror/lib/codemirror.css',
     'css!/components/codemirror/addon/dialog/dialog.css',
@@ -28,6 +34,7 @@ define([
     'css!/components/components-font-awesome/css/font-awesome.min.css',
     'less!/profile/app-profile.less',
 ], function (
+    ApiConfig,
     $,
     Crypto,
     Listmap,
@@ -88,7 +95,6 @@ define([
     var CREATE_ID = "cp-app-profile-create";
     var HEADER_ID = "cp-app-profile-header";
     var HEADER_RIGHT_ID = "cp-app-profile-rightside";
-    var CREATE_INVITE_BUTTON = 'cp-app-profile-invite-button'; /* jshint ignore: line */
     var VIEW_PROFILE_BUTTON = 'cp-app-profile-viewprofile-button';
 
     var common;
@@ -113,8 +119,9 @@ define([
         }).append(h('i.fa.fa-shhare-alt'))
           .append(h('span', Messages.shareButton))
           .click(function () {
-            var success = Clipboard.copy(url);
-            if (success) { UI.log(Messages.shareSuccess); }
+            Clipboard.copy(url, (err) => {
+                if (!err) { UI.log(Messages.shareSuccess); }
+            });
         }).appendTo($container);
     };
 
@@ -520,9 +527,33 @@ define([
             var metadataMgr = APP.common.getMetadataMgr();
             var privateData = metadataMgr.getPrivateData();
             var url = Hash.getPublicSigningKeyString(privateData.origin, data.name, data.edPublic);
-            var success = Clipboard.copy(url);
-            if (success) { UI.log(Messages.genericCopySuccess); }
+            Clipboard.copy(url, (err) => {
+                if (!err) { UI.log(Messages.genericCopySuccess); }
+            });
         };
+    };
+
+    var addCopyData = function ($container) {
+        if (!APP.isModerator) { return; }
+
+        var $div = $(h('div.cp-sidebarlayout-element')).appendTo($container);
+        APP.$copyData = $(h('button.btn.btn-secondary', [
+            h('i.fa.fa-clipboard'),
+            h('span', Messages.support_copyUserData)
+        ])).click(function () {
+            if (!APP.getCopyData) { return; }
+            APP.getCopyData();
+        }).appendTo($div).hide();
+    };
+    var setCopyDataButton = function (data) {
+        if (!data.curvePublic) { return; }
+        APP.getCopyData = function () {
+            if (!APP.isModerator) { return void UI.warn(Messages.error); }
+            Clipboard.copy(JSON.stringify(data), (err) => {
+                if (!err) { UI.log(Messages.genericCopySuccess); }
+            });
+        };
+        if (APP.$copyData) { APP.$copyData.show(); }
     };
 
     var createLeftside = function () {
@@ -546,6 +577,7 @@ define([
             addMuteButton($rightside);
             addDescription(APP.$rightside);
             addPublicKey($rightside);
+            addCopyData($rightside);
             addViewButton($rightside);
             APP.initialized = true;
             createLeftside();
@@ -560,6 +592,7 @@ define([
         refreshFriendRequest(data);
         refreshMute(data);
         setPublicKeyButton(data);
+        setCopyDataButton(data);
     };
 
     var createToolbar = function () {
@@ -606,6 +639,9 @@ define([
 
         APP.origin = privateData.origin;
         APP.readOnly = privateData.readOnly;
+
+        let edPublic = privateData.edPublic;
+        APP.isModerator = ApiConfig.moderatorKeys && ApiConfig.moderatorKeys.includes(edPublic);
 
         common.setTabTitle(Messages.profileButton);
         // If not logged in, you can only view other users's profile

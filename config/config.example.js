@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 /* globals module */
 
 /*  DISCLAIMER:
@@ -70,12 +74,12 @@ module.exports = {
     // httpSafeOrigin: "https://some-other-domain.xyz",
 
 /*  httpAddress specifies the address on which the nodejs server
- *  should be accessible. By default it will listen on 127.0.0.1
- *  (IPv4 localhost on most systems). If you want it to listen on
- *  all addresses, including IPv6, set this to '::'.
+ *  should be accessible. By default it will listen on localhost
+ *  (IPv4 & IPv6 if enabled). If you want it to listen on
+ *  a specific address, specify it here. e.g '192.168.0.1'
  *
  */
-    //httpAddress: '::',
+    //httpAddress: 'localhost',
 
 /*  httpPort specifies on which port the nodejs server should listen.
  *  By default it will serve content over port 3000, which is suitable
@@ -112,6 +116,43 @@ module.exports = {
  *  If so, set 'maxWorkers' to a positive integer.
  */
     // maxWorkers: 4,
+
+    /* =====================
+     *       Sessions
+     * ===================== */
+
+    /*  Accounts can be protected with an OTP (One Time Password) system
+     *  to add a second authentication layer. Such accounts use a session
+     *  with a given lifetime after which they are logged out and need
+     *  to be re-authenticated. You can configure the lifetime of these
+     *  sessions here.
+     *
+     *  defaults to 7 days
+     */
+    //otpSessionExpiration: 7*24, // hours
+
+    /*  Registered users can be forced to protect their account
+     *  with a Multi-factor Authentication (MFA) tool like a TOTP
+     *  authenticator application.
+     *
+     *  defaults to false
+     */
+    //enforceMFA: false,
+
+    /* =====================
+     *       Privacy
+     * ===================== */
+
+    /*  Depending on where your instance is hosted, you may be required to log IP
+     *  addresses of the users who make a change to a document. This setting allows you
+     *  to do so. You can configure the logging system below in this config file.
+     *  Setting this value to true will include a log for each websocket connection
+     *  including this connection's unique ID, the user public key and the IP.
+     *  NOTE: this option requires a log level of "info" or below.
+     *
+     *  defaults to false
+     */
+    //logIP: false,
 
     /* =====================
      *         Admin

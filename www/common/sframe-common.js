@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 define([
     'jquery',
     '/api/config',
@@ -15,6 +19,7 @@ define([
     '/common/sframe-common-mailbox.js',
     '/common/inner/cache.js',
     '/common/inner/common-mediatag.js',
+    '/common/inner/mfa.js',
     '/common/metadata-manager.js',
 
     '/customize/application_config.js',
@@ -46,6 +51,7 @@ define([
     Mailbox,
     Cache,
     MT,
+    MFA,
     MetadataMgr,
     AppConfig,
     Pages,
@@ -119,6 +125,7 @@ define([
     funcs.importMediaTagMenu = callWithCommon(MT.importMediaTagMenu);
     funcs.getMediaTagPreview = callWithCommon(MT.getMediaTagPreview);
     funcs.getMediaTag = callWithCommon(MT.getMediaTag);
+    funcs.totpSetup = callWithCommon(MFA.totpSetup);
 
     // Thumb
     funcs.displayThumbnail = callWithCommon(Thumb.displayThumbnail);
@@ -433,7 +440,11 @@ define([
     };
 
     funcs.setLoginRedirect = function (page) {
-        ctx.sframeChan.query('EV_SET_LOGIN_REDIRECT', page);
+        // We have to logout before redirecting because otherwise Safari might keep
+        // the guest SharedWorker alive
+        funcs.logout(() => {
+            ctx.sframeChan.event('EV_SET_LOGIN_REDIRECT', page);
+        });
     };
 
     funcs.isPresentUrl = function (cb) {
@@ -844,6 +855,28 @@ define([
                 UI.errorLoadingScreen(Messages.restrictedError);
             });
 
+            ctx.sframeChan.on("EV_DELETED_ERROR", function (reason) {
+                var obj = reason;
+                var viewer;
+                if (typeof(reason) === "object") {
+                    reason = obj.reason;
+                    viewer = obj.viewer;
+                }
+                funcs.onServerError({
+                    type: 'EDELETED',
+                    message: reason,
+                    viewer: viewer
+                });
+            });
+
+            ctx.sframeChan.on("EV_DRIVE_DELETED", function (reason) {
+                funcs.onServerError({
+                    type: 'EDELETED',
+                    drive: true,
+                    message: reason
+                });
+            });
+
             ctx.sframeChan.on("EV_PAD_PASSWORD_ERROR", function () {
                 UI.errorLoadingScreen(Messages.password_error_seed);
             });
@@ -863,6 +896,10 @@ define([
                 UI.updateLoadingProgress(data);
             });
 
+            ctx.sframeChan.on('Q_LOADING_MISSING_AUTH', function (data, cb) {
+                UIElements.onMissingMFA(funcs, data, cb);
+            });
+
             ctx.sframeChan.on('EV_NEW_VERSION', function () {
                 // TODO lock the UI and do the same in non-framework apps
                 var $err = $('<div>').append(Messages.newVersionError);
@@ -879,13 +916,19 @@ define([
 
             ctx.sframeChan.on('EV_LOADING_ERROR', function (err) {
                 var msg = err;
-                if (err === 'DELETED') {
-                    // XXX You can still use the current version in read-only mode by pressing Esc.
+                if (err === 'DELETED' || (err && err.type === 'EDELETED')) {
+                    // You can still use the current version in read-only mode by pressing Esc.
                     // what if they don't have a keyboard (ie. mobile)
-                    msg = Messages.deletedError + '<br>' + Messages.errorRedirectToHome;
-                }
-                if (err === "INVALID_HASH") {
+                    if (err.type && err.message) {
+                        msg = UI.getDestroyedPlaceholderMessage(err.message, false, true);
+                    } else {
+                        msg = Messages.deletedError;
+                    }
+                    msg += '<br>' + Messages.errorRedirectToHome;
+                } else if (err === "INVALID_HASH") {
                     msg = Messages.invalidHashError;
+                } else if (err === 'ACCOUNT') { // block 404 but no placeholder
+                    msg = Messages.login_unhandledError;
                 }
                 UI.errorLoadingScreen(msg, false, function () {
                     funcs.gotoURL('/drive/');
@@ -969,6 +1012,7 @@ define([
             } catch (e) {}
 
             ctx.sframeChan.on('EV_LOGOUT', function () {
+                if (window.CP_ownAccountDeletion) { return; }
                 $(window).on('keyup', function (e) {
                     if (e.keyCode === 27) {
                         UI.removeLoadingScreen();
@@ -993,6 +1037,10 @@ define([
 
             ctx.sframeChan.on('EV_CHROME_68', function () {
                 UI.alert(Messages.chrome68);
+            });
+
+            ctx.sframeChan.on('EV_IFRAME_TITLE', function (title) {
+                document.title = title;
             });
 
             funcs.isPadStored(function (err, val) {
