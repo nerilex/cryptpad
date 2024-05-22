@@ -1,0 +1,44 @@
+/*
+ * SPDX-FileCopyrightText: 2023 XWiki CryptPad Team <contact@cryptpad.org> and contributors
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import (reference) "../include/infopages.less";
+@import (reference) "../include/colortheme-all.less";
+@import (reference) "../include/alertify.less";
+@import (reference) "../include/checkmark.less";
+@import (reference) "../include/forms.less";
+
+&.cp-page-load {
+    .infopages_main();
+    .forms_main();
+
+    .alertify_main();
+    .checkmark_main(20px);
+
+    .form {
+        max-width: 400px;
+        padding: 20px;
+    }
+    .alertify {
+        // workaround for alertify making empty p
+        p:empty {
+            display: none;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        @media screen and (max-width: 600px) {
+            nav .btn-danger {
+                line-height: inherit;
+            }
+        }
+
+    }
+}
+
