@@ -243,10 +243,11 @@ define([
         });
     };
 
-    let makeAllData = function (numberUsers, cb) {
+    let makeAllData = function (cb) {
         var sem = Saferphore.create(10);
+        let max = Env.numberUsers + Env.offset;
         nThen(w => {
-            for (let i=0; i<numberUsers; i++) {
+            for (let i=Env.offset; i<max; i++) {
                 let done = w();
                 sem.take(function(give) {
                     console.log('loading user ', i);
@@ -364,13 +365,16 @@ define([
             if (startedData) { return; }
             startedData = true;
             spinner.spin();
-            let users = Number($(input).val());
+            let users = Env.numberUsers = Number($(input).val());
+            Env.offset = Number($(inputOff).val()) || 0;
+            Env.delay = Number($(inputFreq).val()) || 800;
+            Env.maxQ = Number($(inputMax).val()) || 0;
             if (typeof(users) !== "number" || !users) {
                 return void console.error('Not a valid number');
             }
             $(button).remove();
             $(buttonData).remove();
-            makeAllData(users, () => {
+            makeAllData(() => {
                 spinner.done();
                 UI.log('DONE');
             });
