@@ -29,7 +29,8 @@ define([
 
     let Env = {
         users: {},
-        channels: {}
+        channels: {},
+        queries: 0
     };
     let startSendDataEvt = Util.mkEvent(true);
 
@@ -153,7 +154,9 @@ define([
     //      * RPC commands?
 
     let setRandomInterval = f => {
-        let rdm = 300 + Math.floor(1000 * Math.random());
+        let delay = (Env.delay - 300)*2;
+        let rdm = 300 + Math.floor(delay * Math.random());
+        if (Env.stopPatch) { return; }
         setTimeout(function () {
             f();
             setRandomInterval(f);
@@ -183,7 +186,7 @@ define([
             makeData(i, w());
         }).nThen(w => {
             if (init) { return; }
-            let min = Math.max(0, i-5); // XXX 5 users per pad
+            let min = Math.max(Env.offset, i-5); // XXX 5 users per pad
             for (let j = min; j<i; j++) {
                 myPads.push(j);
                 joinChan(me, j, w());
@@ -204,6 +207,7 @@ define([
                         let m = signMsg(!(i%50), chanObj.secret);
                         console.log('Send patch', channel, i%50);
                         chanObj.total = i+1;
+                        Env.incQueries();
                         wc.bcast(m);
                     });
                 });
@@ -217,11 +221,12 @@ define([
 
     };
 
-    let start = function (numberUsers, cb) {
-        clearDataCmd(numberUsers);
-        var sem = Saferphore.create(10);
+    let start = function (cb) {
+        clearDataCmd(Env.numberUsers);
+        var sem = Saferphore.create(20);
+        let max = Env.numberUsers + Env.offset;
         nThen(w => {
-            for (let i=0; i<numberUsers; i++) {
+            for (let i=Env.offset; i<max; i++) {
                 let done = w();
                 sem.take(function(give) {
                     console.log('loading user ', i);
@@ -259,41 +264,100 @@ define([
     };
 
     $(function () {
-        let input = h('input', {type:'number',value:10,min:1, step:1});
+        let input = h('input', {type:'number',value:100,min:1, step:1});
         let label = h('label', [
             h('span', 'Number of users'),
             input
         ]);
+
+        let inputOff = h('input', {type:'number',value:0,min:0, step:1});
+        let labelOff = h('label', [
+            h('span', 'User offset'),
+            inputOff
+        ]);
+
+        let inputFreq = h('input', {type:'number',value:800,min:300, step:1});
+        let labelFreq = h('label', [
+            h('span', 'Average time between patches (ms) per user per channel'),
+            inputFreq
+        ]);
+
+        let inputMax = h('input', {type:'number',value:0,min:0, step:1});
+        let labelMax = h('label', [
+            h('span', 'Max queries (0 for infinite)'),
+            inputMax
+        ]);
+
+        let queries = h('span');
+        let freq = h('span');
+        let time = h('span');
+        let res = h('div', [queries, h('br'), time, h('br'), freq]);
+
         let button = h('button.btn.btn-primary', 'Start load testing');
         let buttonPatch = h('button.btn.btn-primary', {style:'display:none;'}, 'Start sending patches');
+        let buttonStopPatch = h('button.btn.btn-danger-alt', {style:'display:none;'}, 'STOP sending patches');
         let buttonData = h('button.btn', 'Create data');
         var spinner = UI.makeSpinner();
         let content = h('div', [
             h('div.form', [
                 label,
-                h('nav', [button, buttonPatch, buttonData, spinner.spinner])
+                labelOff,
+                labelFreq,
+                labelMax,
+                h('nav', [button, buttonPatch, buttonStopPatch, buttonData, spinner.spinner]),
+                res
             ])
         ]);
+
+        Env.incQueries = () => {
+            Env.queries++;
+            if (Env.maxQ && Env.queries >= Env.maxQ) {
+                Env.stopPatch = true;
+                $(buttonStopPatch).click();
+            }
+        };
+
         let started = false;
         $(button).click(() => {
             if (started) { return; }
             spinner.spin();
             started = true;
             $(button).remove();
-            let users = Number($(input).val());
+            let users = Env.numberUsers = Number($(input).val());
+            Env.offset = Number($(inputOff).val()) || 0;
+            Env.delay = Number($(inputFreq).val()) || 800;
+            Env.maxQ = Number($(inputMax).val()) || 0;
             if (typeof(users) !== "number" || !users) {
                 return void console.error('Not a valid number');
             }
             $(buttonData).remove();
-            start(users, () => {
+            start(() => {
                 spinner.done();
                 UI.log('READY: you can now start sending patches');
                 $(buttonPatch).show();
             });
         });
+        let qIt, fIt;
         $(buttonPatch).click(() => {
             startSendDataEvt.fire();
             $(buttonPatch).remove();
+            $(buttonStopPatch).show();
+            Env.start = +new Date();
+            qIt = setInterval(() => {
+                $(queries).text('Queries: '+Env.queries);
+                let q = Env.queries;
+                let now = +new Date();
+                let diffTime = (now-Env.start)/1000;
+                let f = Math.floor(q/diffTime);
+                $(freq).text('Queries/s: '+f);
+                $(time).text('Time: '+Math.floor(diffTime)+'s');
+            }, 200);
+        });
+        $(buttonStopPatch).click(() => {
+            Env.stopPatch = true;
+            clearInterval(qIt);
+            clearInterval(fIt);
+            $(buttonStopPatch).remove();
         });
         let startedData = false;
         $(buttonData).click(() => {
