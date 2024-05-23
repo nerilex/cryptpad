@@ -197,30 +197,34 @@ define([
         }).nThen(w => {
             if (init) { return; }
             myPads.forEach(function (id) {
-                let channel = Env.users[id].secret.channel;
-                let wc = me.network.webChannels.find(obj => {
-                    return obj.id === channel;
-                });
-                let chanObj = Env.channels[channel] || {};
-                // Only fill the chan if it is not originally empty
-                if (Env.users[id].isEmpty) { return; }
-                startSendDataEvt.reg(function () {
-                    setRandomInterval(function () {
-                        let i = chanObj.total || 0;
-                        let m = signMsg(!(i%50), chanObj.secret);
-                        console.log('Send patch', channel, i%50);
-                        chanObj.total = i+1;
-                        Env.incQueries();
-                        let t = +new Date();
-                        wc.bcast(m).then(() => {
-                            let now = +new Date();
-                            Env.lag.push((now - t));
-                        }, err => {
-                            Env.errors++;
-                            console.error(err);
+                let channel = (Env.users[id] && Env.users[id].secret) ? Env.users[id].secret.channel : null;
+                if (channel==null) {
+                       console.log("Channel " + id + " is null");
+                } else {
+                    let wc = me.network.webChannels.find(obj => {
+                        return obj.id === channel;
+                    });
+                    let chanObj = Env.channels[channel] || {};
+                    // Only fill the chan if it is not originally empty
+                    if (Env.users[id].isEmpty) { return; }
+                    startSendDataEvt.reg(function () {
+                        setRandomInterval(function () {
+                            let i = chanObj.total || 0;
+                            let m = signMsg(!(i%50), chanObj.secret);
+                            console.log('Send patch', channel, i%50);
+                            chanObj.total = i+1;
+                            Env.incQueries();
+                            let t = +new Date();
+                            wc.bcast(m).then(() => {
+                                let now = +new Date();
+                                Env.lag.push((now - t));
+                            }, err => {
+                                Env.errors++;
+                                console.error(err);
+                            });
                         });
                     });
-                });
+                }
             });
         }).nThen(w => {
             // TODO
