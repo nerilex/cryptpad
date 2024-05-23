@@ -182,7 +182,16 @@ nThen(function (w) {
     }, 250);
 
     setInterval(() => {
-        Monitoring.applyToEnv(Env, Monitoring.getData('main'));
+        // Add main process data to monitoring
+        let monitoring = Monitoring.getData('main');
+        let Server = Env.Server;
+        let stats = Server.getSessionStats();
+        monitoring.ws = stats.total;
+        monitoring.channels = Server.getActiveChannelCount();
+        monitoring.registered = Object.keys(Env.netfluxUsers).length;
+        let blobs = Env.monitoring?.upload
+        // Send updated values
+        Monitoring.applyToEnv(Env, monitoring);
         broadcast('MONITORING', Env.monitoring);
     }, Monitoring.interval);
 
