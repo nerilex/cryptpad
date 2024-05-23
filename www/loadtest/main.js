@@ -30,7 +30,9 @@ define([
     let Env = {
         users: {},
         channels: {},
-        queries: 0
+        queries: 0,
+        lag: [],
+        errors: 0
     };
     let startSendDataEvt = Util.mkEvent(true);
 
@@ -186,6 +188,7 @@ define([
             makeData(i, w());
         }).nThen(w => {
             if (init) { return; }
+            console.warn(i, me.secret.channel);
             let min = Math.max(Env.offset, i-5); // XXX 5 users per pad
             for (let j = min; j<i; j++) {
                 myPads.push(j);
@@ -208,7 +211,14 @@ define([
                         console.log('Send patch', channel, i%50);
                         chanObj.total = i+1;
                         Env.incQueries();
-                        wc.bcast(m);
+                        let t = +new Date();
+                        wc.bcast(m).then(() => {
+                            let now = +new Date();
+                            Env.lag.push((now - t));
+                        }, err => {
+                            Env.errors++;
+                            console.error(err);
+                        });
                     });
                 });
             });
@@ -291,8 +301,23 @@ define([
 
         let queries = h('span');
         let freq = h('span');
+        let freqr = h('span');
         let time = h('span');
-        let res = h('div', [queries, h('br'), time, h('br'), freq]);
+        let lag = h('span');
+        let errors = h('span');
+        let res = h('div', [
+            queries,
+            h('br'),
+            time,
+            h('br'),
+            freq,
+            h('br'),
+            freqr,
+            h('br'),
+            lag,
+            h('br'),
+            errors
+        ]);
 
         let button = h('button.btn.btn-primary', 'Start load testing');
         let buttonPatch = h('button.btn.btn-primary', {style:'display:none;'}, 'Start sending patches');
@@ -323,7 +348,7 @@ define([
             if (started) { return; }
             spinner.spin();
             started = true;
-            $(button).remove();
+            //$(button).remove();
             let users = Env.numberUsers = Number($(input).val());
             Env.offset = Number($(inputOff).val()) || 0;
             Env.delay = Number($(inputFreq).val()) || 800;
@@ -334,25 +359,43 @@ define([
             $(buttonData).remove();
             start(() => {
                 spinner.done();
+                started = false;
                 UI.log('READY: you can now start sending patches');
                 $(buttonPatch).show();
             });
         });
         let qIt, fIt;
+        let last = {};
         $(buttonPatch).click(() => {
             startSendDataEvt.fire();
             $(buttonPatch).remove();
             $(buttonStopPatch).show();
             Env.start = +new Date();
+            last.t = +new Date();
+            last.q = 0;
             qIt = setInterval(() => {
                 $(queries).text('Queries: '+Env.queries);
                 let q = Env.queries;
                 let now = +new Date();
                 let diffTime = (now-Env.start)/1000;
                 let f = Math.floor(q/diffTime);
-                $(freq).text('Queries/s: '+f);
+                const average = Math.round((Env.lag.length && Env.lag.reduce((a, b) => a + b, 0) / Env.lag.length)) || 0;
+
+                $(freq).text('Queries/s (all): '+f);
                 $(time).text('Time: '+Math.floor(diffTime)+'s');
+                $(lag).text('Avg response time: '+average+'ms');
+                $(errors).text('Errors: '+Env.errors);
+                Env.lag = [];
             }, 200);
+            fIt = setInterval(() => {
+                let q = Env.queries;
+                let now = +new Date();
+                let fr = Math.floor(1000*(Env.queries-last.q)/(now-last.t));
+
+                last.t = +new Date();
+                last.q = q;
+                $(freqr).text('Queries/s (recent): '+fr);
+            }, 1000);
         });
         $(buttonStopPatch).click(() => {
             Env.stopPatch = true;
