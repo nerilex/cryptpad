@@ -81,7 +81,6 @@ define([
     return form = blocks.form([
         grid 
     ], blocks.nav([save]));
-        callback()
 
   };
   return Customize

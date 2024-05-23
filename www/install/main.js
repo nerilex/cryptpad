@@ -17,9 +17,10 @@ define([
     '/customize/pages.js',
     '/common/rpc.js',
     '/admin/customize.js',
+    'configscreen.js',
 
     'css!/components/components-font-awesome/css/font-awesome.min.css',
-], function ($, Login, Cryptpad, /*Test,*/ Cred, UI, Util, Realtime, Constants, Feedback, LocalStore, h, Pages, Rpc, Customize) {
+], function ($, Login, Cryptpad, /*Test,*/ Cred, UI, Util, Realtime, Constants, Feedback, LocalStore, h, Pages, Rpc, Customize, AppConfigScreen) {
     if (window.top !== window) { return; }
     var Messages = Cryptpad.Messages;
     $(function () {
@@ -126,7 +127,8 @@ define([
                 };
                 var content = Customize.disableApps(sendAdminDecree)
                 UI.removeLoadingScreen()
-                document.body.append(content)
+                AppConfigScreen.addConfigScreen(content)
+                // document.body.append(content)
                 
               
             });
