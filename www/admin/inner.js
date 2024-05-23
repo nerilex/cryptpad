@@ -202,6 +202,7 @@ define([
         //general blocks
 
         // Msg.admin_flushCacheHint, .admin_flushCacheTitle, .admin_flushCacheButton
+        
         sidebar.addItem('flush-cache', function (cb) {
             var button = blocks.activeButton('primary', '',
                     Messages.admin_flushCacheButton, done => {

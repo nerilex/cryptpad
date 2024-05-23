@@ -22,6 +22,195 @@ define([
     h
 ) {
     const Sidebar = {};
+    let blocks = Sidebar.blocks = {};
+
+    // let blocks = sidebar.blocks = {};
+        blocks.labelledInput = (label, input, inputBlock) => {
+            let uid = Util.uid();
+            let id = `cp-${app}-item-${uid}`;
+            input.setAttribute('id', id);
+            let labelElement = h('label', { for: id }, label);
+            return h('div', { class: 'cp-labelled-input' }, [
+                labelElement,
+                inputBlock || input
+            ]);
+        };
+
+        blocks.icon = (icon) => {
+            let s = icon.split(' ');
+            let cls;
+            if (s.length > 1) {
+                cls = '.' + s.join('.');
+            } else {
+                let prefix = icon.slice(0, icon.indexOf('-'));
+                cls = `.${prefix}.${icon}`;
+            }
+            return h(`i${cls}`);
+        };
+        blocks.button = (type, icon, text) => {
+            type = type || 'primary';
+            return h(`button.btn.btn-${type}`, [
+                icon ? blocks.icon(icon) : undefined,
+                h('span', text)
+            ]);
+        };
+        blocks.nav = (buttons) => {
+            return h('nav', buttons);
+        };
+        blocks.form = (content, nav) => {
+            return h('div.cp-sidebar-form', [content, nav]);
+        };
+        blocks.input = (attr) => {
+            return h('input', attr);
+        };
+        blocks.inputButton = (input, button, opts) => {
+            if (opts.onEnterDelegate) {
+                $(input).on('keypress', e => {
+                    if (e.which === 13) {
+                        $(button).click();
+                    }
+                });
+            }
+            return h('div.cp-sidebar-input-block', [input, button]);
+        };
+        blocks.code = val => {
+            return h('code', val);
+        };
+        blocks.inline = (value, className) => {
+            let attr = {};
+            if (className) { attr.class = className; }
+            return h('span', attr, value);
+        };
+        blocks.block = (content, className) => {
+            let attr = {};
+            if (className) { attr.class = className; }
+            return h('div', attr, content);
+        };
+        blocks.paragraph = (content) => {
+            return h('p', content);
+        };
+
+        blocks.alert = function (type, big, content) {
+            var isBigClass = big ? '.cp-sidebar-bigger-alert' : ''; // Add the class if we want a bigger font-size
+            return h('div.alert.alert-' + type + isBigClass, content);
+        };
+
+        blocks.alertHTML = function (message, element) {
+            return h('span', [
+                UIElements.setHTML(h('p'), message),
+                element
+        ]);
+        };
+        blocks.pre = (value) => {
+            return h('pre', value);
+        };
+
+        blocks.textarea = function (attributes, value) {
+            return h('textarea', attributes, value || '');
+        };
+
+        blocks.unorderedList = function (entries) {
+            const ul = h('ul');
+
+            ul.updateContent = (entries) => {
+                ul.innerHTML = '';
+                entries.forEach(entry => {
+                    const li = h('li', entry);
+                    ul.appendChild(li);
+                });
+            };
+            ul.updateContent(entries);
+
+            return ul;
+        };
+
+        blocks.checkbox = (key, label, state, opts, onChange) => {
+            var box = UI.createCheckbox(`cp-${app}-${key}`, label, state, { label: { class: 'noTitle' } });
+            if (opts && opts.spinner) {
+                box.spinner = UI.makeSpinner($(box));
+            }
+            if (typeof(onChange) === "function"){
+                $(box).find('input').on('change', function() {
+                    onChange(this.checked);
+                });
+            }
+            return box;
+        };
+
+        blocks.table = function (header, entries) {
+            const table = h('table.cp-sidebar-table');
+            if (header) {
+                const headerValues = header.map(value => {
+                    const lastWord = value.split(' ').pop(); // Extracting the last word
+                    return h('th', { class: lastWord.toLowerCase() }, value); // Modified to use the last word
+                });
+                const headerRow = h('thead', h('tr', headerValues));
+                table.appendChild(headerRow);
+            }
+
+            let getRow = line => {
+                return h('tr', line.map(value => {
+                    if (typeof(value) === "object" && value.content) {
+                        return h('td', value.attr || {}, value.content);
+                    }
+                    return h('td', value);
+                }));
+            };
+            table.updateContent = (newEntries) => {
+                $(table).show().find('tbody').remove();
+                if (!newEntries.length) {
+                    return void $(table).hide();
+                }
+                let bodyContent = [];
+                newEntries.forEach(line => {
+                    const row = getRow(line);
+                    bodyContent.push(row);
+                });
+                table.appendChild(h('tbody', bodyContent));
+            };
+            table.updateContent(entries);
+            table.addLine = (line) => {
+                const row = getRow(line);
+                $(table).find('tbody').append(row);
+            };
+
+            return table;
+        };
+
+        blocks.link = function (text, url, isSafe) {
+            var link = h('a', { href: url }, text);
+            $(link).click(function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                if (isSafe) {
+                    common.openURL(url);
+                } else {
+                    common.openUnsafeURL(url);
+                }
+            });
+            return link;
+        };
+
+        blocks.activeButton = function (type, icon, text, callback, keepEnabled) {
+            var button = blocks.button(type, icon, text);
+            var $button = $(button);
+            button.spinner = h('span');
+            var spinner = UI.makeSpinner($(button.spinner));
+
+            Util.onClickEnter($button, function () {
+                spinner.spin();
+                if (!keepEnabled) { $button.attr('disabled', 'disabled'); }
+                let done = success => {
+                    $button.removeAttr('disabled');
+                    if (success) { return void spinner.done(); }
+                    spinner.hide();
+                };
+                // The callback can be synchrnous or async, handle "done" in both ways
+                let success = callback(done); // Async
+                if (typeof(success) === "boolean") { done(success); } // Sync
+            });
+            return button;
+        };
 
     Sidebar.create = function (common, app, $container) {
         const $leftside = $(h('div#cp-sidebarlayout-leftside')).appendTo($container);
@@ -32,8 +221,7 @@ define([
         };
         const items = {};
 
-        let blocks = sidebar.blocks = {};
-        blocks.labelledInput = (label, input, inputBlock) => {
+                blocks.labelledInput = (label, input, inputBlock) => {
             let uid = Util.uid();
             let id = `cp-${app}-item-${uid}`;
             input.setAttribute('id', id);

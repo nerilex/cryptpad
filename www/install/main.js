@@ -16,9 +16,10 @@ define([
     '/common/hyperscript.js',
     '/customize/pages.js',
     '/common/rpc.js',
+    '/admin/customize.js',
 
     'css!/components/components-font-awesome/css/font-awesome.min.css',
-], function ($, Login, Cryptpad, /*Test,*/ Cred, UI, Util, Realtime, Constants, Feedback, LocalStore, h, Pages, Rpc) {
+], function ($, Login, Cryptpad, /*Test,*/ Cred, UI, Util, Realtime, Constants, Feedback, LocalStore, h, Pages, Rpc, Customize) {
     if (window.top !== window) { return; }
     var Messages = Cryptpad.Messages;
     $(function () {
@@ -112,6 +113,26 @@ define([
                 return void UI.alert(Messages.register_mustAcceptTerms);
             }
 
+            let startOnboarding = function (network, proxy) {
+             Rpc.create(network, proxy.edPrivate, proxy.edPublic, function (e, rpc) {
+                if (e) {
+                  // TODO: handle error
+                  return;
+                }
+
+                let sendAdminDecree = function (command, data, callback) {
+                    var params = ['ADMIN_DECREE', [command, data]];  
+                    rpc.send('ADMIN', params, callback)
+                };
+                var content = Customize.disableApps(sendAdminDecree)
+                UI.removeLoadingScreen()
+                document.body.append(content)
+                
+              
+            });
+  
+    };
+
             setTimeout(function () {
                 var span = h('span', [
                     h('h2', [
@@ -145,7 +166,8 @@ define([
                                 edPublic: proxy.edPublic
                             }, function (e) {
                                 if (e) { UI.alert(Messages.error); return console.error(e); }
-                                window.location.href = '/drive/';
+                                // window.location.href = '/drive/';
+                                startOnboarding(data.network, proxy);
                             });
                         });
 
