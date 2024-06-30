@@ -88,6 +88,7 @@ module.exports = {
  *
  */
     //httpPort: 3000,
+    //httpUdsPath: '',
 
 /*  httpSafePort allows you to specify an alternative port from which
  *  the node process should serve sandboxed assets. The default value is
@@ -95,6 +96,7 @@ module.exports = {
  *
  */
     //httpSafePort: 3001,
+    //httpSafeUdsPath: '',
 
 /*  Websockets need to be exposed on a separate port from the rest of
  *  the platform's HTTP traffic. Port 3003 is used by default.
@@ -108,6 +110,7 @@ module.exports = {
  *
  */
     // websocketPort: 3003,
+    // websocketUdsPath: 3003,
 
 /*  CryptPad will launch a child process for every core available
  *  in order to perform CPU-intensive tasks in parallel.

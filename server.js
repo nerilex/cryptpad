@@ -84,10 +84,20 @@ nThen(function (w) {
         });
         process.exit(1);
     }
+    
+	const listenOptions = Env.websocketUdsPath ? {
+		path: Env.websocketUdsPath,
+		readableAll: true,
+		writableAll: true
+	} : {
+		port: Env.websocketPort,
+		host: Env.httpAddress
+	};
+	
     Env.httpServer = Http.createServer(app);
-    Env.httpServer.listen(Env.websocketPort, Env.httpAddress, w(function () {
+    Env.httpServer.listen(listenOptions, w(function () {
         Env.Log.info('WEBSOCKET_LISTENING', {
-            port: Env.websocketPort,
+            options: listenOptions,
         });
     }));
 }).nThen(function (w) {
