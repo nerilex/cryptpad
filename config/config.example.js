@@ -86,6 +86,7 @@ module.exports = {
  *
  */
     //httpPort: 3000,
+    //httpUdsPath: '',
 
 /*  httpSafePort purpose is to emulate another origin for the sandbox when
  *  you don't have two domains at hand (i.e. when httpSafeOrigin not defined).
@@ -94,6 +95,7 @@ module.exports = {
  *
  */
     //httpSafePort: 3001,
+    //httpSafeUdsPath: '',
 
 /*  Websockets need to be exposed on a separate port from the rest of
  *  the platform's HTTP traffic. Port 3003 is used by default.
@@ -107,6 +109,7 @@ module.exports = {
  *
  */
     // websocketPort: 3003,
+    // websocketUdsPath: 3003,
 
 /*  CryptPad will launch a child process for every core available
  *  in order to perform CPU-intensive tasks in parallel.
