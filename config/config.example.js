@@ -88,7 +88,6 @@ module.exports = {
  *
  */
     //httpPort: 3000,
-    //httpUdsPath: '',
 
 /*  httpSafePort allows you to specify an alternative port from which
  *  the node process should serve sandboxed assets. The default value is
@@ -96,7 +95,6 @@ module.exports = {
  *
  */
     //httpSafePort: 3001,
-    //httpSafeUdsPath: '',
 
 /*  Websockets need to be exposed on a separate port from the rest of
  *  the platform's HTTP traffic. Port 3003 is used by default.
@@ -110,7 +108,21 @@ module.exports = {
  *
  */
     // websocketPort: 3003,
-    // websocketUdsPath: 3003,
+    
+/* Instead of using TCP ports CryptPad can also listen on Unix Domain Sockets.
+ * If httpUdsPath, httpSafeUdsPath or websocketUdsPath is set to a valid path,
+ * the corresponding port setting is ignored and a socket is created instead.
+ * 
+ * This socket can be used by a webserver (usually NGINX).
+ * 
+ * To create the sockets with read and write permissions for all (similar to 
+ * chmod a+rw <socket>) set udsAccessAllowAll to true.
+ *
+ */    
+    // httpUdsPath: '',
+    // httpSafeUdsPath: '',
+    // websocketUdsPath: '',
+    // udsAccessAllowAll: true,
 
 /*  CryptPad will launch a child process for every core available
  *  in order to perform CPU-intensive tasks in parallel.
