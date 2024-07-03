@@ -87,8 +87,8 @@ nThen(function (w) {
     
 	const listenOptions = Env.websocketUdsPath ? {
 		path: Env.websocketUdsPath,
-		readableAll: true,
-		writableAll: true
+		readableAll: Env.udsAccessAllowAll,
+		writableAll: Env.udsAccessAllowAll,
 	} : {
 		port: Env.websocketPort,
 		host: Env.httpAddress
